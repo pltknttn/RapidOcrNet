@@ -49,6 +49,35 @@ using (var ocrEngin = new RapidOcr())
 	}
 }
 ```
+
+## Custom options (including GPU acceleration)
+The library supports custom session options for the ONNX runtime, which means that you can enable GPU 
+acceleration if you have a compatible GPU and the necessary ONNX runtime providers installed. You can 
+create a custom `SessionOptions` object (definition [here](https://onnxruntime.ai/docs/api/csharp/api/Microsoft.ML.OnnxRuntime.SessionOptions.html))
+and pass it to the `InitModels` method.
+```csharp
+string targetImg = "image.png";
+
+using (var ocrEngin = new RapidOcr())
+{   
+	using var sessionOptions = new SessionOptions
+	{
+		GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_EXTENDED,
+		InterOpNumThreads = 0,
+		IntraOpNumThreads = 0
+	};
+	
+	try { sessionOptions.AppendExecutionProvider_CUDA(); } // Add CUDA provider for GPU acceleration (NVIDIA GPUs)
+	catch { sessionOptions.AppendExecutionProvider_CPU(); } // Fallback to CPU if CUDA provider is not available
+
+	ocrEngin.InitModels(sessionOptions);
+	using (SKBitmap originSrc = SKBitmap.Decode(targetImg))
+	{
+		// Same as in the previous example
+	}
+}
+```
+
 ## Notice
 Based on source code originally developed in the RapidOCR project (Apache-2.0 license).
 - https://github.com/RapidAI/RapidOCR

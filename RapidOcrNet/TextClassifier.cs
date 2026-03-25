@@ -20,21 +20,27 @@ namespace RapidOcrNet
         private InferenceSession _angleNet;
         private string _inputName;
 
-        public void InitModel(string path, int numThread)
+        public void InitModel(string path, SessionOptions op)
         {
             if (!File.Exists(path))
             {
                 throw new FileNotFoundException($"Classifier model file does not exist: '{path}'.");
             }
 
-            var op = new SessionOptions
+            _angleNet = new InferenceSession(path, op);
+            _inputName = _angleNet.InputMetadata.Keys.First();
+        }
+
+        public void InitModel(string path, int numThread)
+        {
+            using var op = new SessionOptions
             {
                 GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_EXTENDED,
                 InterOpNumThreads = numThread,
                 IntraOpNumThreads = numThread
             };
-            _angleNet = new InferenceSession(path, op);
-            _inputName = _angleNet.InputMetadata.Keys.First();
+
+            InitModel(path, op);
         }
 
         public Angle[] GetAngles(SKBitmap[] partImgs, bool doAngle, bool mostAngle)

@@ -3,6 +3,7 @@
 // https://github.com/RapidAI/RapidOCR/blob/92aec2c1234597fa9c3c270efd2600c83feecd8d/dotnet/RapidOcrOnnxCs/OcrLib/OcrLite.cs
 
 using System.Text;
+using Microsoft.ML.OnnxRuntime;
 using SkiaSharp;
 
 namespace RapidOcrNet
@@ -14,7 +15,7 @@ namespace RapidOcrNet
         private readonly TextRecognizer _textRecognizer = new TextRecognizer();
 
         /// <summary>
-        /// Initialize using default models (latin).
+        /// Initialize using default models (latin) and default options.
         /// </summary>
         public void InitModels(int numThread = 0)
         {
@@ -29,11 +30,40 @@ namespace RapidOcrNet
             InitModels(detPath, clsPath, recPath, keysPath, numThread);
         }
 
-        public void InitModels(string detPath, string clsPath, string recPath, string keysPath, int numThread)
+        /// <summary>
+        /// Initialize using default models (latin) and custom options.
+        /// </summary>
+        public void InitModels(SessionOptions op)
+        {
+            const string modelsFolderName = "models";
+            const string modelsVersion = "v5";
+
+            string detPath = Path.Combine(modelsFolderName, modelsVersion, "ch_PP-OCRv5_mobile_det.onnx");
+            string clsPath = Path.Combine(modelsFolderName, modelsVersion, "ch_ppocr_mobile_v2.0_cls_infer.onnx");
+            string recPath = Path.Combine(modelsFolderName, modelsVersion, "latin_PP-OCRv5_rec_mobile_infer.onnx");
+            string keysPath = Path.Combine(modelsFolderName, modelsVersion, "ppocrv5_latin_dict.txt");
+
+            InitModels(detPath, clsPath, recPath, keysPath, op);
+        }
+
+        /// <summary>
+        /// Initialize using custom models and default options.
+        /// </summary>
+        public void InitModels(string detPath, string clsPath, string recPath, string keysPath, int numThread = 0)
         {
             _textDetector.InitModel(detPath, numThread);
             _textClassifier.InitModel(clsPath, numThread);
             _textRecognizer.InitModel(recPath, keysPath, numThread);
+        }
+
+        /// <summary>
+        /// Initialize using custom models and custom options.
+        /// </summary>
+        public void InitModels(string detPath, string clsPath, string recPath, string keysPath, SessionOptions op)
+        {
+            _textDetector.InitModel(detPath, op);
+            _textClassifier.InitModel(clsPath, op);
+            _textRecognizer.InitModel(recPath, keysPath, op);
         }
 
         public OcrResult Detect(string path, RapidOcrOptions options)

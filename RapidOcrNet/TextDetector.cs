@@ -31,22 +31,27 @@ namespace RapidOcrNet
             };
         }
 
-        public void InitModel(string path, int numThread)
+        public void InitModel(string path, SessionOptions op)
         {
             if (!File.Exists(path))
             {
                 throw new FileNotFoundException($"Detector model file does not exist: '{path}'.");
             }
 
-            var op = new SessionOptions
+            _dbNet = new InferenceSession(path, op);
+            _inputName = _dbNet.InputMetadata.Keys.First();
+        }
+
+        public void InitModel(string path, int numThread)
+        {
+            using var op = new SessionOptions
             {
                 GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_EXTENDED,
                 InterOpNumThreads = numThread,
                 IntraOpNumThreads = numThread
             };
 
-            _dbNet = new InferenceSession(path, op);
-            _inputName = _dbNet.InputMetadata.Keys.First();
+            InitModel(path, op);
         }
 
         public IReadOnlyList<TextBox>? GetTextBoxes(SKBitmap src, ScaleParam scale, float boxScoreThresh, float boxThresh,
@@ -323,7 +328,7 @@ namespace RapidOcrNet
                         ymax = (short)point.Y;
                     }
                 }
-                
+
                 // The cropped destBitmap shares the underlying pixel buffer with the source, so changes
                 // to either will affect both unless you copy it.
                 var roiBitmap = new SKBitmap();

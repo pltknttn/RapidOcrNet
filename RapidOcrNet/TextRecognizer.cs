@@ -21,7 +21,7 @@ namespace RapidOcrNet
         private string[] _keys;
         private string _inputName;
 
-        public void InitModel(string path, string keysPath, int numThread)
+        public void InitModel(string path, string keysPath, SessionOptions op)
         {
             if (!File.Exists(path))
             {
@@ -33,16 +33,21 @@ namespace RapidOcrNet
                 throw new FileNotFoundException($"Recognizer keys file does not exist: '{keysPath}'.");
             }
 
-            var op = new SessionOptions
+            _crnnNet = new InferenceSession(path, op);
+            _inputName = _crnnNet.InputMetadata.Keys.First();
+            _keys = InitKeys(keysPath);
+        }
+
+        public void InitModel(string path, string keysPath, int numThread)
+        {
+            using var op = new SessionOptions
             {
                 GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_EXTENDED,
                 InterOpNumThreads = numThread,
                 IntraOpNumThreads = numThread
             };
 
-            _crnnNet = new InferenceSession(path, op);
-            _inputName = _crnnNet.InputMetadata.Keys.First();
-            _keys = InitKeys(keysPath);
+            InitModel(path, keysPath, op);
         }
 
         private static string[] InitKeys(string path)
